@@ -1,0 +1,92 @@
+对于java中的static了解多少，2019年3月5日，我面试了一家公司，笔试题有三道，主要就是对java中关键字static的理解。
+之前我是详细看过static关键字的，但是在这次笔试题中，还是挫败了，所以我才决定以后遇到问题要写下来，毕竟看了问题的
+答案那一会是很清楚的，但是过一段时间就没那么好的记性了。
+
+关于static的用用途以及误区，可以参考https://www.cnblogs.com/dolphin0520/p/3799052.html，描述的还是很详细的，
+这里我只对面试中的程序做分析。不多废话，直接进入代码：
+class X {
+    Y b = new Y();
+    public X(){
+        System.out.print("X");
+    }
+}
+
+class Y {
+    public Y(){
+        System.out.print("Y");
+    }
+}
+
+public class Z extends X{
+    Y y = new Y();
+    public Z(){
+        System.out.print("Z");
+    }
+    public static void main(String[] args) {
+        new Z();
+    }
+
+}
+输出的结果：YXYZ
+原因：看一下这段程序执行的顺序就很清楚了，首先程序要从main进入，在进入main之前要加载类Z，因为main方法在其中。
+程序加载Z的时候发现Z继承自X，所以要先加载X，X加载完成，在加载完之后，就通过构造器来生成对象。而在生成对象的时候，
+要先初始化父类的成员变量，所以会先执行Y b = new Y(); 输出Y，然后执行父类的构造方法，输出X,X加载完成后加载Z，
+同样的方式，会输出YZ,所以最终的结果是YXYZ。
+
+既然是考察static的，怎么能少得了主角static呢，看接下来的代码：
+class HelloA {
+    public HelloA() {
+        System.out.println("HelloA");
+    }
+
+    {
+        System.out.println("I'm HelloA class");
+    }
+
+    static {
+        System.out.println("static A");
+    }
+}
+
+
+
+public class HelloB extends HelloA{
+    public HelloB(){
+        System.out.println("HelloB");
+    }
+    {
+        System.out.println("I'm HelloB class");
+    }
+    static {
+        System.out.println("static B");
+    }
+    public static void main(String[] args) {
+        System.out.println("---main start---");
+        new HelloB();
+        new HelloB();
+        System.out.println("---main end---");
+    }
+
+}
+输出结果：
+static A
+static B
+---main start---
+I'm HelloA class
+HelloA
+I'm HelloB class
+HelloB
+I'm HelloA class
+HelloA
+I'm HelloB class
+HelloB
+---main end---
+代码的执行过程：main是入口，所以先加载类HelloB，但是HelloB继承自HelloA，所以先加载HelloA，输出static A，
+
+HelloA加载完成，然后加载类HelloB，输出static B,然后进入main函数，输出---main start---，接下来就是new HelloB();
+因为静态代码块只执行一次，所以先初始化父类成员变量输出I'm HelloA class，然后父类构造方法HelloA，父类的加载完成后执
+行本身的成员变量I'm HelloB class，构造方法HelloB，第二次的new HelloB()是同第一次的，最后main函数的---main end---。
+这就是程序执行的完成流程，分析了流程就会清楚究竟程序的输出是什么样的了。
+
+static关键字是考察的一个重点，但是今天的笔试我分析的并不是很好。好记性不如烂笔头，这次的失利让我决定开始把自己零散的记忆
+结合其他牛人的博客，整理到自己的git中，便于以后温故使用。
